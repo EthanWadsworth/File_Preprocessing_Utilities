@@ -1,10 +1,11 @@
 import sys
-sys.path.append('.')
+# for running from base project directory, change to ../ as needed
+sys.path.append('.') 
 from modules import text_utilities
 from modules.command_line_parser import create_argument_parser
 
 # global constants
-TEMPLATE = 'usage: python script.py {commands}'
+TEMPLATE = 'usage: python script.py {commands}' # base for command usage 
 
 
 def main():

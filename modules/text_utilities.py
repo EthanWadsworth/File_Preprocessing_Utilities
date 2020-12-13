@@ -23,7 +23,12 @@ def gen_word_maps(text):
         occurs after each word in the hashmap
     """
 
-    word_map = {}  # dictonary to hold frequency of each word
+    # if the text is an empty string, return None for both maps 
+    if is_empty_text(text):
+        return None, None
+
+    # dictonary to hold frequency of each word
+    word_map = {}  
     # dictionary to hold dictionaries of next word frequencies for each word
     word_distribution = {}  
 
@@ -46,6 +51,7 @@ def gen_word_maps(text):
         curr_word_index += 1
 
     return word_distribution, word_map
+
 
 def read_file(filename):
     """ Reads from file and returns text from file converted into a string
@@ -71,6 +77,7 @@ def read_file(filename):
         print(err)
         exit()
 
+
 def gen_maps_from_file(filename):
     """ generates word distribution and individual word hashmaps from an 
     entered file
@@ -90,6 +97,7 @@ def gen_maps_from_file(filename):
         occurs after each word in the hashmap
     """
 
+    # read in text from file specified and generate and return the word maps
     text = read_file(filename)
     return gen_word_maps(text)
 
@@ -328,6 +336,11 @@ def show_word_frequencies(filename):
     # get word map and word distribution for file
     word_distribution, word_map = gen_maps_from_file(filename)
 
+    # check if any of the word maps are empty
+    if not word_distribution or not word_map:
+        print('Could not generate frequency chart for empty file: ' + filename)
+        exit()
+
     # sort by dictionary value using get as a callback function
     keys_sorted = sorted(word_distribution, key=word_distribution.get)
 
@@ -336,6 +349,7 @@ def show_word_frequencies(filename):
     for key in keys_sorted:
         sorted_dict[key] = word_distribution[key]
 
+    # convert dictionary objects into lists for array slicing
     top_hundred_words = list(sorted_dict.keys())
     top_hundred_values = list(sorted_dict.values())
 
@@ -368,18 +382,35 @@ def show_next_word_distribution(filename, word):
 
     # get word map and distribution for file
     word_distribution, word_map = gen_maps_from_file(filename)
+
+    # check if any of the word maps are empty
+    if not word_distribution or not word_map:
+        print('Could not generate frequency chart for empty file: ' + filename)
+        exit()
+    
+    # dictionary containing the next word frequencies for chosen word
+    next_word_frequencies = {}
+
+    # see if the chosen word exists in the word map dictionary
+    # exit the function if a KeyError is thrown
+    try:
+        next_word_frequencies = word_map[word]
+    except KeyError:
+        print(word + ' does not exist in the file: ' + filename)
+        exit()
+
+    # preprocess word
     word = word.lower()
-    # keys = word_map[word].keys()
-    # values = word_map[word].values()
 
     # sort word dictionary by dictionary value using get as a callback function
-    keys_sorted = sorted(word_map[word], key=word_map[word].get)
+    keys_sorted = sorted(next_word_frequencies, key=next_word_frequencies.get)
 
     # add keys in sorted order to the sorted dictionary
     sorted_dict = {} 
     for key in keys_sorted:
-        sorted_dict[key] = word_map[word][key]
+        sorted_dict[key] = next_word_frequencies[key]
 
+    # convert dictionary objects into lists for array slicing
     top_hundred_words = list(sorted_dict.keys())
     top_hundred_values = list(sorted_dict.values())
 
@@ -391,6 +422,7 @@ def show_next_word_distribution(filename, word):
         top_hundred_words = top_hundred_words[start_slice:end_slice]
         top_hundred_values = top_hundred_values[start_slice:end_slice]
 
+    # create the bar chart for the word frequencies 
     draw_distribution(top_hundred_words, top_hundred_values, 'Next Words', 
                         'Frequency', 'Next Word Frequency Distribution for: ' + 
                         word)
@@ -408,8 +440,15 @@ def show_preprocessed_distribution(filename):
     None (shows bar chart figure of word frequencies after preprocessing)
     """
 
-    # preprocess text from file before getting word map and frequency
+    # get text from file
     text = read_file(filename)
+
+    # do not generate a frequency chart for any empty file
+    if is_empty_text(text):
+        print('Could not generate frequency chart for empty file: ' + filename)
+        exit()
+
+    # preprocess text from file before getting word map and frequency
     text = remove_stopwords(text)
     text = stem_words(text)
     word_distribution, word_map = gen_word_maps(text)
@@ -422,6 +461,7 @@ def show_preprocessed_distribution(filename):
     for key in keys_sorted:
         sorted_dict[key] = word_distribution[key]
 
+    # convert dictionary objects into lists for array slicing
     top_hundred_words = list(sorted_dict.keys())
     top_hundred_values = list(sorted_dict.values())
 
@@ -481,6 +521,11 @@ def get_word_count(filename):
 
     # read text from file and remove punctuation and newline characters
     text = read_file(filename)
+
+    # check if text from file is consider empty, then count is 0
+    if (is_empty_text(text)):
+        return 0
+
     text = text.translate(text.maketrans("", "", string.punctuation))
     text = text.replace('\n', ' ')
 
@@ -508,17 +553,23 @@ def gen_sentence(filename, sentence_length=10):
         generated sentence using word maps
     """
 
+    word_distribution, word_map = gen_maps_from_file(filename)
+
+    # check if any of the word maps are empty, exit with message
+    if not word_distribution or not word_map:
+        print('cannot generate sentence from empty file: ' + filename)
+        exit()
+
     # get most common word from word frequencies and use tha as the first word
     # in the generated sentence
-    word_distribution, word_map = gen_maps_from_file(filename)
     last_index = len(word_distribution) - 1
     most_common_word = sorted(word_distribution, key=word_distribution.get)
     most_common_word = most_common_word[last_index]
-    sentence = most_common_word
 
     # using the next word frequencies for words in the word map, get the most
     # common next word for each word and append it to the sentence while the
     # length has not been met 
+    sentence = most_common_word
     word_count = 1
     while word_count < sentence_length:
         last_index = len(word_map[most_common_word]) - 1
@@ -534,3 +585,26 @@ def gen_sentence(filename, sentence_length=10):
 
     sentence += '.'
     return sentence
+
+
+def is_empty_text(text):
+    """ Checks for empty text data read from file
+
+    Parameters
+    ----------
+    text: string
+        Block of text to perform empty checks on
+
+    Returns
+    -------
+    True if considerd empty, False if text is not empty
+    """
+
+    # removes all newline characters are strips leading and ending whitespace
+    text = text.replace('\n', '').strip()
+
+    # return True if empty, else return false
+    if text == '':
+        return True
+
+    return False
