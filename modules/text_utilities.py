@@ -494,6 +494,8 @@ def draw_distribution(keys, values, x_axis, y_axis, title):
     """
 
     # specifications for bar chart figure
+    # link to relevant documentation
+    # https://matplotlib.org/3.3.3/api/_as_gen/matplotlib.pyplot.bar.html
     y_position = np.arange(len(keys))
     plt.bar(y_position, values, align='center', alpha=0.5)
     plt.xticks(y_position, keys, rotation=90)
